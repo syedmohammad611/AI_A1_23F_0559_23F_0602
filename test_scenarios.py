@@ -18,7 +18,7 @@ class TestScenarios:
     
     def create_custom_grid(self, height, width, obstacles, start, goal):
         """Create a grid with specific configuration."""
-        grid = NavigationGrid(height, width, obstacle_ratio=0)
+        grid = NavigationGrid(height, width, block_rate=0)
         grid.matrix = np.zeros((height, width), dtype=int)
         
         # Set obstacles
@@ -70,28 +70,28 @@ class TestScenarios:
         
         # Show the result
         grid.render_frame(f"{algorithm_name} - {scenario_type} (Complete)")
-        plt.pause(2)
+        plt.pause(1) 
         
         return result
     
     # ========== BFS TEST SCENARIOS ==========
     def test_bfs_best_case(self):
-        """BFS Best Case: Direct path with no obstacles."""
+        """BFS Best Case: Goal is immediate neighbor (1 step away)."""
         grid = self.create_custom_grid(
-            height=10, width=10,
+            height=8, width=8,
             obstacles=[],
-            start=(0, 0),
-            goal=(0, 3)  # Goal is very close horizontally
+            start=(4, 4),
+            goal=(3, 4)  # Directly above - first direction checked (Up)
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
+        engine = SearchTechniques(grid, wait_time=0.005)
         return self.run_test(grid, "BFS", engine.run_bfs, "BEST CASE")
     
     def test_bfs_worst_case(self):
-        """BFS Worst Case: Goal is far with maze-like obstacles."""
+        """BFS Worst Case: Goal far away with serpentine maze."""
         grid = self.create_custom_grid(
             height=15, width=15,
             obstacles=[
-                # Create a maze forcing BFS to explore many nodes
+                # Zigzag maze forcing exploration of entire grid
                 (1, i) for i in range(1, 14)
             ] + [
                 (3, i) for i in range(0, 13)
@@ -105,59 +105,59 @@ class TestScenarios:
                 (11, i) for i in range(0, 13)
             ],
             start=(0, 0),
-            goal=(14, 14)  # Goal in opposite corner
+            goal=(14, 14)
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
+        engine = SearchTechniques(grid, wait_time=0.005)
         return self.run_test(grid, "BFS", engine.run_bfs, "WORST CASE")
     
     # ========== DFS TEST SCENARIOS ==========
     def test_dfs_best_case(self):
-        """DFS Best Case: Direct path aligned with DFS's exploration order."""
+        """DFS Best Case: Goal aligned with first exploration direction (Up)."""
         grid = self.create_custom_grid(
-            height=10, width=10,
+            height=8, width=8,
             obstacles=[],
-            start=(0, 0),
-            goal=(3, 0)  # Goal is down (DFS explores down-right first)
+            start=(5, 4),
+            goal=(3, 4)  # Straight up - DFS checks Up first
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
+        engine = SearchTechniques(grid, wait_time=0.005)
         return self.run_test(grid, "DFS", engine.run_dfs, "BEST CASE")
     
     def test_dfs_worst_case(self):
-        """DFS Worst Case: Goal requires backtracking through wrong branches."""
+        """DFS Worst Case: Goal requires full exploration and backtracking."""
         grid = self.create_custom_grid(
             height=15, width=15,
             obstacles=[
-                # Block right and down paths, forcing DFS into wrong branches
+                # Force DFS into deep wrong branches
                 (0, i) for i in range(2, 15)
             ] + [
                 (i, 1) for i in range(1, 14)
             ] + [
-                (14, i) for i in range(1, 13)
+                (14, i) for i in range(2, 14)
             ],
             start=(0, 0),
             goal=(14, 14)
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
+        engine = SearchTechniques(grid, wait_time=0.005)
         return self.run_test(grid, "DFS", engine.run_dfs, "WORST CASE")
     
     # ========== UCS TEST SCENARIOS ==========
     def test_ucs_best_case(self):
-        """UCS Best Case: Straight line to goal."""
+        """UCS Best Case: Direct adjacent goal, minimal cost."""
         grid = self.create_custom_grid(
-            height=10, width=10,
+            height=8, width=8,
             obstacles=[],
-            start=(5, 0),
-            goal=(5, 4)  # Horizontal line
+            start=(4, 4),
+            goal=(4, 5)  # Right neighbor (cost = 1.0)
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
+        engine = SearchTechniques(grid, wait_time=0.005)
         return self.run_test(grid, "UCS", engine.run_ucs, "BEST CASE")
     
     def test_ucs_worst_case(self):
-        """UCS Worst Case: Many equal-cost paths, explores most of grid."""
+        """UCS Worst Case: Multiple equal-cost paths."""
         grid = self.create_custom_grid(
             height=12, width=12,
             obstacles=[
-                # Scattered obstacles creating multiple paths
+                # Scattered obstacles creating many alternative paths
                 (2, 2), (2, 5), (2, 8),
                 (5, 1), (5, 4), (5, 7), (5, 10),
                 (8, 2), (8, 5), (8, 8),
@@ -165,94 +165,92 @@ class TestScenarios:
             start=(0, 0),
             goal=(11, 11)
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
+        engine = SearchTechniques(grid, wait_time=0.005)
         return self.run_test(grid, "UCS", engine.run_ucs, "WORST CASE")
     
     # ========== DLS TEST SCENARIOS ==========
     def test_dls_best_case(self):
-        """DLS Best Case: Goal within depth limit and easily found."""
+        """DLS Best Case: Goal at depth 1 (immediate neighbor)."""
         grid = self.create_custom_grid(
-            height=10, width=10,
+            height=8, width=8,
             obstacles=[],
-            start=(5, 5),
-            goal=(7, 5)  # Close goal, depth 2
+            start=(4, 4),
+            goal=(3, 4)  # Depth 1 - immediate neighbor
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
-        # Use depth limit of 5
-        def run_dls_5():
-            return engine.run_dls(depth_cap=5)
-        return self.run_test(grid, "DLS (depth=5)", run_dls_5, "BEST CASE")
+        engine = SearchTechniques(grid, wait_time=0.005)
+        def run_dls_3():
+            return engine.run_dls(depth_cap=3)
+        return self.run_test(grid, "DLS (depth=3)", run_dls_3, "BEST CASE")
     
     def test_dls_worst_case(self):
-        """DLS Worst Case: Goal just beyond depth limit."""
+        """DLS Worst Case: Goal beyond depth limit (unreachable)."""
         grid = self.create_custom_grid(
-            height=15, width=15,
+            height=12, width=12,
             obstacles=[],
             start=(0, 0),
-            goal=(10, 10)  # Manhattan distance = 20, beyond typical depth limit
+            goal=(10, 10)  # Manhattan distance = 20, needs depth > 10
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
-        # Use insufficient depth limit
-        def run_dls_8():
-            return engine.run_dls(depth_cap=8)  # Too shallow!
-        return self.run_test(grid, "DLS (depth=8)", run_dls_8, "WORST CASE")
+        engine = SearchTechniques(grid, wait_time=0.005)
+        def run_dls_5():
+            return engine.run_dls(depth_cap=5)  # Too shallow - fails
+        return self.run_test(grid, "DLS (depth=5)", run_dls_5, "WORST CASE")
     
     # ========== IDDFS TEST SCENARIOS ==========
     def test_iddfs_best_case(self):
-        """IDDFS Best Case: Goal found at shallow depth."""
+        """IDDFS Best Case: Goal at depth 1 (found in first iteration)."""
         grid = self.create_custom_grid(
-            height=10, width=10,
+            height=8, width=8,
             obstacles=[],
-            start=(5, 5),
-            goal=(6, 6)  # Diagonal neighbor, depth 2
+            start=(4, 4),
+            goal=(3, 4)  # Immediate neighbor, depth 1
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
-        def run_iddfs_10():
-            return engine.run_iddfs(upper_limit=10)
-        return self.run_test(grid, "IDDFS", run_iddfs_10, "BEST CASE")
+        engine = SearchTechniques(grid, wait_time=0.005)
+        def run_iddfs_5():
+            return engine.run_iddfs(upper_limit=5)
+        return self.run_test(grid, "IDDFS", run_iddfs_5, "BEST CASE")
     
     def test_iddfs_worst_case(self):
-        """IDDFS Worst Case: Goal at maximum depth, many iterations."""
+        """IDDFS Worst Case: Goal at maximum depth with obstacles."""
         grid = self.create_custom_grid(
-            height=15, width=15,
+            height=12, width=12,
             obstacles=[
-                # Force a long winding path
-                (i, 5) for i in range(0, 12)
+                # Create winding path requiring many iterations
+                (i, 5) for i in range(1, 10)
             ] + [
-                (12, i) for i in range(5, 15)
+                (10, i) for i in range(5, 12)
             ],
             start=(0, 0),
-            goal=(14, 14)
+            goal=(11, 11)
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
-        def run_iddfs_25():
-            return engine.run_iddfs(upper_limit=25)
-        return self.run_test(grid, "IDDFS", run_iddfs_25, "WORST CASE")
+        engine = SearchTechniques(grid, wait_time=0.005)
+        def run_iddfs_20():
+            return engine.run_iddfs(upper_limit=20)
+        return self.run_test(grid, "IDDFS", run_iddfs_20, "WORST CASE")
     
     # ========== BIDIRECTIONAL TEST SCENARIOS ==========
     def test_bidirectional_best_case(self):
-        """Bidirectional Best Case: Clear path, searches meet quickly."""
+        """Bidirectional Best Case: Short straight path, quick meeting."""
         grid = self.create_custom_grid(
-            height=10, width=10,
+            height=8, width=8,
             obstacles=[],
-            start=(0, 0),
-            goal=(9, 9)  # Diagonal, but searches meet in middle
+            start=(4, 2),
+            goal=(4, 6)  # Same row, 4 steps apart
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
+        engine = SearchTechniques(grid, wait_time=0.005)
         return self.run_test(grid, "Bidirectional", engine.run_bi_search, "BEST CASE")
     
     def test_bidirectional_worst_case(self):
-        """Bidirectional Worst Case: Wall between start/goal, searches miss."""
+        """Bidirectional Worst Case: Wall forces long detour."""
         grid = self.create_custom_grid(
             height=15, width=15,
             obstacles=[
-                # Vertical wall with small opening at bottom
+                # Vertical wall with opening at bottom
                 (i, 7) for i in range(0, 13)
             ],
             start=(0, 0),
-            goal=(0, 14)  # Opposite sides of wall
+            goal=(0, 14)
         )
-        engine = SearchTechniques(grid, wait_time=0.01)
+        engine = SearchTechniques(grid, wait_time=0.005)
         return self.run_test(grid, "Bidirectional", engine.run_bi_search, "WORST CASE")
     
     def print_summary(self):
