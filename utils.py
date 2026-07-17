@@ -32,10 +32,7 @@ class PathfindingHeap:
 def fetch_adjacent_nodes(location: Tuple[int, int], max_r: int, max_c: int) -> List[Tuple[int, int]]:
     """Retrieves valid neighboring coordinates including diagonals."""
     r, c = location
-    # Possible movement directions (8-way connectivity might be used depending on logic)
-    # The original script used a specific set of 6 directions? Let me check again.
-    # In utils.py: dirs = [(-1, 0), (0, 1), (1, 0), (1, 1), (0, -1), (-1, -1)]
-    # That's 6 directions. I should stick to the same logic.
+    # Clockwise expansion order: Up, Right, Down, Down-Right, Left, Up-Left
     offsets = [(-1, 0), (0, 1), (1, 0), (1, 1), (0, -1), (-1, -1)]
     neighbors = []
     
