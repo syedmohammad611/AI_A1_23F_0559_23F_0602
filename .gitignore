@@ -10,7 +10,9 @@ ENV/
 build/
 dist/
 *.egg-info/
-
+.vs/
+__pycache__/
+*.pyc
 # Visual Studio
 .vs/
 .vscode/
