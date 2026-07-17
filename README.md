@@ -64,8 +64,8 @@ All algorithms expand neighbors in a **strict clockwise order**:
 
 ```bash
 # Clone the repository
-git clone https://github.com/syedmohammad611/AI_A1_23F_0559_23F_0602.git
-cd AI_A1_23F_0559_23F_0602
+git clone https://github.com/syedmohammad611/PathQuest-Uninformed-Search-Algorithm-Visualizer.git
+cd PathQuest-Uninformed-Search-Algorithm-Visualizer
 
 # Install dependencies
 pip install -r requirements.txt
